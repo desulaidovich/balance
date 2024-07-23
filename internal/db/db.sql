@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS balance;
-
 CREATE TABLE balance (
     id SERIAL PRIMARY KEY,
     balance INT NOT NULL,
