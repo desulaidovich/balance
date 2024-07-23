@@ -9,6 +9,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+type JsonMessage struct {
+	Code    uint   `json:"code"`
+	Message string `json:"message"`
+}
+
 type HttpApi struct {
 	mux     *http.ServeMux
 	db      *sqlx.DB
@@ -33,36 +38,47 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		request, _ := json.Marshal(map[string]map[string]string{
-			"error": {
-				"code":    "400",
-				"message": "params money must be integer type",
-			},
+
+		jsonError := &JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "money" должен быть числом`,
+		}
+
+		request, _ := json.Marshal(map[string]JsonMessage{
+			"error": *jsonError,
 		})
+
 		w.Write(request)
 		return
 	}
 
 	if money <= 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		request, _ := json.Marshal(map[string]map[string]string{
-			"error": {
-				"code":    "400",
-				"message": "params money must be above than zero",
-			},
+
+		jsonError := &JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "money" должен быть больше нуля`,
+		}
+
+		request, _ := json.Marshal(map[string]JsonMessage{
+			"error": *jsonError,
 		})
+
 		w.Write(request)
 		return
 	}
 
 	h.service.CreateWallet()
 
-	request, _ := json.Marshal(map[string]map[string]string{
-		"ok": {
-			"code":    "200",
-			"message": "balance created with " + param + " rub",
-		},
+	jsonError := &JsonMessage{
+		Code:    http.StatusOK,
+		Message: "Создан новый кошелек с суммой " + param + " рублей",
+	}
+
+	request, _ := json.Marshal(map[string]JsonMessage{
+		"error": *jsonError,
 	})
+
 	w.Write(request)
 }
 
