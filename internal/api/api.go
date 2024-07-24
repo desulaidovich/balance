@@ -1,18 +1,15 @@
 package api
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/desulaidovich/balance/internal/jsonutil"
+	"github.com/desulaidovich/balance/internal/models"
 	"github.com/desulaidovich/balance/internal/services"
 	"github.com/jmoiron/sqlx"
 )
-
-type JsonMessage struct {
-	Code    uint   `json:"code"`
-	Message string `json:"message"`
-}
 
 type HttpApi struct {
 	mux     *http.ServeMux
@@ -31,55 +28,87 @@ func New(mux *http.ServeMux, db *sqlx.DB) *HttpApi {
 }
 
 func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
-	param := r.URL.Query().Get("money")
-	money, err := strconv.Atoi(param)
-
-	w.Header().Set("Content-Type", "application/json")
+	moneyParam := r.URL.Query().Get("money")
+	money, err := strconv.Atoi(moneyParam)
 
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-
-		jsonError := &JsonMessage{
+		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "money" должен быть числом`,
+			Message: `Параметр "moeny" должен быть числом`,
 		}
-
-		request, _ := json.Marshal(map[string]JsonMessage{
-			"error": *jsonError,
-		})
-
-		w.Write(request)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
 		return
 	}
 
-	if money <= 0 {
-		w.WriteHeader(http.StatusBadRequest)
+	levelParam := r.URL.Query().Get("level")
+	level, err := strconv.Atoi(levelParam)
 
-		jsonError := &JsonMessage{
+	if err != nil {
+		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "money" должен быть больше нуля`,
+			Message: `Параметр "level" должен быть числом`,
 		}
-
-		request, _ := json.Marshal(map[string]JsonMessage{
-			"error": *jsonError,
-		})
-
-		w.Write(request)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
 		return
 	}
 
-	h.service.CreateWallet()
+	wallet := &models.Wallet{
+		Balance:             money,
+		Hold:                0,
+		IdentificationLevel: level,
+	}
 
-	jsonError := &JsonMessage{
+	limit, err := h.service.GetLimitByID(levelParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	if !wallet.LimitLawCheck(limit) {
+		limitMaxValue := limit.BalanceMax
+		limitMinValue := limit.BalanceMin
+		limitName := limit.IdentificationLevel
+
+		text := fmt.Sprintf("В тарифе %s может быть от %d до %d руб.",
+			limitName, limitMinValue, limitMaxValue)
+
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: text,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	if err = h.service.CreateWallet(wallet); err != nil {
+		message := jsonutil.JsonMessage{
+			Code: http.StatusBadRequest,
+			// Лень придумывать
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	message := jsonutil.JsonMessage{
 		Code:    http.StatusOK,
-		Message: "Создан новый кошелек с суммой " + param + " рублей",
+		Message: "OK",
+		Node: map[string]any{
+			"id":       wallet.ID,
+			"balance":  wallet.Balance,
+			"currency": "rub",
+			"identification_level": map[string]any{
+				"id":   wallet.IdentificationLevel,
+				"name": limit.IdentificationLevel,
+			},
+		},
 	}
-
-	request, _ := json.Marshal(map[string]JsonMessage{
-		"error": *jsonError,
-	})
-
-	w.Write(request)
+	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
 }
 
 // func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {

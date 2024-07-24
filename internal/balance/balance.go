@@ -12,7 +12,7 @@ import (
 func Run() {
 	cfg := config.Load()
 
-	postgres, err := db.PostgresNew(cfg)
+	postgres, err := db.NewPostgres(cfg)
 
 	if err != nil {
 		panic(err)
