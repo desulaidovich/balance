@@ -11,6 +11,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const (
+	BALANCE_EDIT_TYPE_DEBIT   = 1
+	BALANCE_EDIT_TYPE_DEPOSIT = 2
+)
+
 type HttpApi struct {
 	mux     *http.ServeMux
 	db      *sqlx.DB
@@ -249,9 +254,126 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
 }
 
-// func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
-// 	w.Write([]byte("POST host:port/balance/edit?id=id&money=сумма&type=списание/пополнение"))
-// }
+// /wallet/edit?wallet_id=INT_VALUE&money=INT_VALUE&type=BALANCE_EDIT_TYPE
+func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
+	walletIDParam := r.URL.Query().Get("wallet_id")
+	walletID, err := strconv.Atoi(walletIDParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "wallet_id" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	moneyParam := r.URL.Query().Get("money")
+	money, err := strconv.Atoi(moneyParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "money" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	typeEditParam := r.URL.Query().Get("type")
+	typeEdit, err := strconv.Atoi(typeEditParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "type" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	wallet, err := h.service.GetWalletByID(walletID)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	// Снятие
+	if typeEdit == BALANCE_EDIT_TYPE_DEBIT {
+		if err = wallet.Debit(money); err != nil {
+			message := jsonutil.JsonMessage{
+				Code:    http.StatusBadRequest,
+				Message: err.Error(),
+			}
+			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+			return
+		}
+		if err = h.service.UpdateWallet(wallet); err != nil {
+			message := jsonutil.JsonMessage{
+				Code:    http.StatusBadRequest,
+				Message: err.Error(),
+			}
+			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+			return
+		}
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusOK,
+			Message: "OK",
+		}
+		jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+		return
+	}
+
+	// Пополнение
+	if typeEdit == BALANCE_EDIT_TYPE_DEPOSIT {
+		limitID := strconv.Itoa(wallet.IdentificationLevel)
+		limit, err := h.service.GetLimitByID(limitID)
+
+		if err != nil {
+			message := jsonutil.JsonMessage{
+				Code:    http.StatusBadRequest,
+				Message: err.Error(),
+			}
+			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		}
+
+		if err = wallet.Deposit(money, limit); err != nil {
+			message := jsonutil.JsonMessage{
+				Code:    http.StatusBadRequest,
+				Message: err.Error(),
+			}
+			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+			return
+		}
+
+		if err = h.service.UpdateWallet(wallet); err != nil {
+			message := jsonutil.JsonMessage{
+				Code:    http.StatusBadRequest,
+				Message: err.Error(),
+			}
+			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+			return
+		}
+
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusOK,
+			Message: "OK",
+		}
+		jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+		return
+	}
+
+	message := jsonutil.JsonMessage{
+		Code:    http.StatusBadRequest,
+		Message: `Неизвестный параметр "type"`,
+	}
+	jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+}
 
 // func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 // 	w.Write([]byte("GET host:port/balance/get?id=id"))

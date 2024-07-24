@@ -27,6 +27,30 @@ type LimitLaw struct {
 	BalanceMax          int    `db:"balance_max"`
 }
 
+func (w *Wallet) Debit(money int) error {
+	if w.Hold < money {
+		return errors.New("нечего снимать")
+	}
+
+	if err := w.DisholdBalance(money); err != nil {
+		return err
+	}
+
+	w.Balance -= money
+	return nil
+}
+
+func (w *Wallet) Deposit(money int, l *LimitLaw) error {
+	if w.Balance+money >= l.BalanceMax {
+		return errors.New("будет превышен лимит по денежным средствам")
+	}
+	if !w.LimitLawCheck(l) {
+		return errors.New("превышен лимит по денежным средствам")
+	}
+	w.Balance += money
+	return nil
+}
+
 func (w *Wallet) HoldBalance(hold int) error {
 	if hold > w.Balance {
 		return errors.New("вы не можете захолдировать больше, чем у вас есть")
@@ -58,7 +82,11 @@ func (w *Wallet) DisholdBalance(hold int) error {
 }
 
 func (w *Wallet) LimitLawCheck(l *LimitLaw) bool {
-	if w.IdentificationLevel == l.ID && w.Balance >= l.BalanceMax || w.Balance <= l.BalanceMin {
+	if w.IdentificationLevel == l.ID && w.Balance >= l.BalanceMax {
+		return false
+	}
+
+	if w.IdentificationLevel == l.ID && w.Balance <= l.BalanceMin {
 		return false
 	}
 	return true

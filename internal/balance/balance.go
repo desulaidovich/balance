@@ -24,7 +24,7 @@ func Run() {
 	mux.HandleFunc("POST /wallet/create", httpApi.Create)
 	mux.HandleFunc("POST /wallet/hold", httpApi.Hold)
 	mux.HandleFunc("POST /wallet/dishold", httpApi.Dishold)
-	// mux.HandleFunc("POST /wallet/edit", httpApi.Edit)
+	mux.HandleFunc("POST /wallet/edit", httpApi.Edit)
 	// mux.HandleFunc("GET /wallet/get", httpApi.Get)
 
 	server := &http.Server{
