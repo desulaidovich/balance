@@ -44,6 +44,19 @@ func (w *Wallet) HoldBalance(hold int) error {
 	return nil
 }
 
+func (w *Wallet) DisholdBalance(hold int) error {
+	if w.Hold < hold {
+		return errors.New("денег нет уже аааа")
+	}
+
+	if hold <= 0 {
+		return errors.New("вы не можете расхолдировать ноль или меньше")
+	}
+
+	w.Hold -= hold
+	return nil
+}
+
 func (w *Wallet) LimitLawCheck(l *LimitLaw) bool {
 	if w.IdentificationLevel == l.ID && w.Balance >= l.BalanceMax || w.Balance <= l.BalanceMin {
 		return false

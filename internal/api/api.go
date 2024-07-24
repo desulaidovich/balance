@@ -179,9 +179,75 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
 }
 
-// func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
-// 	w.Write([]byte("POST host:port/balance/dishold?id=id&money=сумма"))
-// }
+// /wallet/dishold?wallet_id=INT_VALUE&money=INT_VALUE
+func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
+	walletIDParam := r.URL.Query().Get("wallet_id")
+	walletID, err := strconv.Atoi(walletIDParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "wallet_id" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	moneyParam := r.URL.Query().Get("money")
+	money, err := strconv.Atoi(moneyParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "money" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	wallet, err := h.service.GetWalletByID(walletID)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code: http.StatusBadRequest,
+			// Лень придумывать
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	if err = wallet.DisholdBalance(money); err != nil {
+		message := jsonutil.JsonMessage{
+			Code: http.StatusBadRequest,
+			// Лень придумывать
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	if err = h.service.UpdateWallet(wallet); err != nil {
+		message := jsonutil.JsonMessage{
+			Code: http.StatusBadRequest,
+			// Лень придумывать
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+	}
+
+	message := jsonutil.JsonMessage{
+		Code: http.StatusOK,
+		// Лень придумывать
+		Message: "disholded",
+		Node: map[string]any{
+			"wallet_id":    wallet.ID,
+			"disholded":    money,
+			"current_hold": wallet.Hold,
+		},
+	}
+	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+}
 
 // func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 // 	w.Write([]byte("POST host:port/balance/edit?id=id&money=сумма&type=списание/пополнение"))
