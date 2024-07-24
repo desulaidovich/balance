@@ -1,6 +1,7 @@
 package models
 
 import (
+	"errors"
 	"time"
 )
 
@@ -24,6 +25,23 @@ type LimitLaw struct {
 	IdentificationLevel string `db:"identifiaction_level"`
 	BalanceMin          int    `db:"balance_min"`
 	BalanceMax          int    `db:"balance_max"`
+}
+
+func (w *Wallet) HoldBalance(hold int) error {
+	if hold > w.Balance {
+		return errors.New("вы не можете захолдировать больше, чем у вас есть")
+	}
+
+	if w.Hold > w.Balance {
+		return errors.New("денег нет уже аааа")
+	}
+
+	if hold <= 0 {
+		return errors.New("вы не можете захолдировать ноль или меньше")
+	}
+
+	w.Hold += hold
+	return nil
 }
 
 func (w *Wallet) LimitLawCheck(l *LimitLaw) bool {
