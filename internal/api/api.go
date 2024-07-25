@@ -31,7 +31,7 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `параметр "moeny" должен быть числом`,
+			Message: err.Error(),
 		}
 		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
@@ -41,7 +41,7 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `параметр "level" должен быть числом`,
+			Message: err.Error(),
 		}
 		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
