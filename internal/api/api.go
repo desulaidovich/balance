@@ -375,6 +375,41 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
 }
 
-// func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
-// 	w.Write([]byte("GET host:port/balance/get?id=id"))
-// }
+// /wallet/get?wallet_id=INT_VALUE
+func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
+	walletIDParam := r.URL.Query().Get("wallet_id")
+	walletID, err := strconv.Atoi(walletIDParam)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: `Параметр "wallet_id" должен быть числом`,
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+
+	wallet, err := h.service.GetWalletByID(walletID)
+
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code: http.StatusBadRequest,
+			// Лень придумывать
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		return
+	}
+	message := jsonutil.JsonMessage{
+		Code: http.StatusOK,
+		// Лень придумывать
+		Message: "gots",
+		Node: map[string]any{
+			"wallet_id": wallet.ID,
+			"disholded": wallet.Balance,
+			"hold":      wallet.Hold,
+		},
+	}
+	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+
+}
