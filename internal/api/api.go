@@ -1,19 +1,13 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/desulaidovich/balance/internal/jsonutil"
 	"github.com/desulaidovich/balance/internal/models"
+	"github.com/desulaidovich/balance/internal/requtil"
 	"github.com/desulaidovich/balance/internal/services"
 	"github.com/jmoiron/sqlx"
-)
-
-const (
-	BALANCE_EDIT_TYPE_DEBIT   = 1
-	BALANCE_EDIT_TYPE_DEPOSIT = 2
 )
 
 type HttpApi struct {
@@ -32,29 +26,24 @@ func New(mux *http.ServeMux, db *sqlx.DB) *HttpApi {
 	}
 }
 
-// /wallet/create?money=INT_VALUE&level=INT_VALUE
 func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
-	moneyParam := r.URL.Query().Get("money")
-	money, err := strconv.Atoi(moneyParam)
-
+	money, err := requtil.GetParamsByName(r, "money")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "moeny" должен быть числом`,
+			Message: `параметр "moeny" должен быть числом`,
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
-	levelParam := r.URL.Query().Get("level")
-	level, err := strconv.Atoi(levelParam)
-
+	level, err := requtil.GetParamsByName(r, "level")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "level" должен быть числом`,
+			Message: `параметр "level" должен быть числом`,
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
@@ -64,352 +53,266 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		IdentificationLevel: level,
 	}
 
-	limit, err := h.service.GetLimitByID(levelParam)
+	limit, err := h.service.GetLimitByID(level)
 
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
-
-	if !wallet.LimitLawCheck(limit) {
-		limitMaxValue := limit.BalanceMax
-		limitMinValue := limit.BalanceMin
-		limitName := limit.IdentificationLevel
-
-		text := fmt.Sprintf("В тарифе %s может быть от %d до %d руб.",
-			limitName, limitMinValue, limitMaxValue)
-
+	if err := wallet.LimitLawCheck(limit); err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: text,
-		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-		return
-	}
-
-	if err = h.service.CreateWallet(wallet); err != nil {
-		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+	if err = h.service.CreateWallet(wallet); err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
 	message := jsonutil.JsonMessage{
-		Code:    http.StatusOK,
-		Message: "created",
-		Node: map[string]any{
+		Code: http.StatusOK,
+		Data: map[string]any{
 			"wallet_id": wallet.ID,
-			"balance":   wallet.Balance,
-			"currency":  "rub",
-			"identification_level": map[string]any{
-				"id":   wallet.IdentificationLevel,
-				"name": limit.IdentificationLevel,
+			"wallet_data": map[string]any{
+				"balance": wallet.Balance,
+				"identification": map[string]any{
+					"id":   wallet.IdentificationLevel,
+					"name": limit.IdentificationLevel,
+				},
 			},
 		},
 	}
-	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+	jsonutil.MarshalResponse(w, http.StatusOK, &message)
 }
 
-// /wallet/hold?wallet_id=INT_VALUE&money=INT_VALUE
 func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
-	walletIDParam := r.URL.Query().Get("wallet_id")
-	walletID, err := strconv.Atoi(walletIDParam)
-
+	walletID, err := requtil.GetParamsByName(r, "wallet_id")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "wallet_id" должен быть числом`,
+			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
-	moneyParam := r.URL.Query().Get("money")
-	money, err := strconv.Atoi(moneyParam)
-
+	money, err := requtil.GetParamsByName(r, "money")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "money" должен быть числом`,
+			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
 	wallet, err := h.service.GetWalletByID(walletID)
-
 	if err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
-
 	if err = wallet.HoldBalance(money); err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
-
 	if err = h.service.UpdateWallet(wallet); err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-	}
-	message := jsonutil.JsonMessage{
-		Code:    http.StatusOK,
-		Message: "holded",
-		Node: map[string]any{
-			"wallet_id": wallet.ID,
-			"hold":      wallet.Hold,
-		},
-	}
-	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
-}
-
-// /wallet/dishold?wallet_id=INT_VALUE&money=INT_VALUE
-func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
-	walletIDParam := r.URL.Query().Get("wallet_id")
-	walletID, err := strconv.Atoi(walletIDParam)
-
-	if err != nil {
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusBadRequest,
-			Message: `Параметр "wallet_id" должен быть числом`,
-		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
-	moneyParam := r.URL.Query().Get("money")
-	money, err := strconv.Atoi(moneyParam)
+	message := jsonutil.JsonMessage{
+		Code: http.StatusOK,
+		Data: map[string]any{
+			"hold": wallet.Hold,
+		},
+	}
+	jsonutil.MarshalResponse(w, http.StatusOK, &message)
+}
 
+func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
+	walletID, err := requtil.GetParamsByName(r, "wallet_id")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "money" должен быть числом`,
+			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+
+	money, err := requtil.GetParamsByName(r, "money")
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
 	wallet, err := h.service.GetWalletByID(walletID)
-
 	if err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
-
 	if err = wallet.DisholdBalance(money); err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
-
 	if err = h.service.UpdateWallet(wallet); err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
 	}
 
 	message := jsonutil.JsonMessage{
 		Code: http.StatusOK,
-		// Лень придумывать
-		Message: "disholded",
-		Node: map[string]any{
-			"wallet_id":    wallet.ID,
-			"disholded":    money,
-			"current_hold": wallet.Hold,
+		Data: map[string]any{
+			"hold": wallet.Hold,
 		},
 	}
-	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+	jsonutil.MarshalResponse(w, http.StatusOK, &message)
 }
 
-// /wallet/edit?wallet_id=INT_VALUE&money=INT_VALUE&type=BALANCE_EDIT_TYPE
 func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
-	walletIDParam := r.URL.Query().Get("wallet_id")
-	walletID, err := strconv.Atoi(walletIDParam)
-
-	if err != nil {
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusBadRequest,
-			Message: `Параметр "wallet_id" должен быть числом`,
-		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-		return
-	}
-
-	moneyParam := r.URL.Query().Get("money")
-	money, err := strconv.Atoi(moneyParam)
-
-	if err != nil {
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusBadRequest,
-			Message: `Параметр "money" должен быть числом`,
-		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-		return
-	}
-
-	typeEditParam := r.URL.Query().Get("type")
-	typeEdit, err := strconv.Atoi(typeEditParam)
-
-	if err != nil {
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusBadRequest,
-			Message: `Параметр "type" должен быть числом`,
-		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-		return
-	}
-
-	wallet, err := h.service.GetWalletByID(walletID)
-
+	walletID, err := requtil.GetParamsByName(r, "wallet_id")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
-	// Снятие
-	if typeEdit == BALANCE_EDIT_TYPE_DEBIT {
-		if err = wallet.Debit(money); err != nil {
-			message := jsonutil.JsonMessage{
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
-			}
-			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-			return
-		}
-		if err = h.service.UpdateWallet(wallet); err != nil {
-			message := jsonutil.JsonMessage{
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
-			}
-			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-			return
-		}
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusOK,
-			Message: "OK",
-		}
-		jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
-		return
-	}
-
-	// Пополнение
-	if typeEdit == BALANCE_EDIT_TYPE_DEPOSIT {
-		limitID := strconv.Itoa(wallet.IdentificationLevel)
-		limit, err := h.service.GetLimitByID(limitID)
-
-		if err != nil {
-			message := jsonutil.JsonMessage{
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
-			}
-			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-		}
-
-		if err = wallet.Deposit(money, limit); err != nil {
-			message := jsonutil.JsonMessage{
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
-			}
-			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-			return
-		}
-
-		if err = h.service.UpdateWallet(wallet); err != nil {
-			message := jsonutil.JsonMessage{
-				Code:    http.StatusBadRequest,
-				Message: err.Error(),
-			}
-			jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-			return
-		}
-
-		message := jsonutil.JsonMessage{
-			Code:    http.StatusOK,
-			Message: "OK",
-		}
-		jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
-		return
-	}
-
-	message := jsonutil.JsonMessage{
-		Code:    http.StatusBadRequest,
-		Message: `Неизвестный параметр "type"`,
-	}
-	jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
-}
-
-// /wallet/get?wallet_id=INT_VALUE
-func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
-	walletIDParam := r.URL.Query().Get("wallet_id")
-	walletID, err := strconv.Atoi(walletIDParam)
-
+	money, err := requtil.GetParamsByName(r, "money")
 	if err != nil {
 		message := jsonutil.JsonMessage{
 			Code:    http.StatusBadRequest,
-			Message: `Параметр "wallet_id" должен быть числом`,
+			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+
+	typeID, err := requtil.GetParamsByName(r, "type_id")
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
 
 	wallet, err := h.service.GetWalletByID(walletID)
-
 	if err != nil {
 		message := jsonutil.JsonMessage{
-			Code: http.StatusBadRequest,
-			// Лень придумывать
+			Code:    http.StatusBadRequest,
 			Message: err.Error(),
 		}
-		jsonutil.MarshalResponse(w, http.StatusBadRequest, "error", &message)
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
 		return
 	}
+
+	limit, err := h.service.GetLimitByID(wallet.IdentificationLevel)
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+	if err := wallet.EditWithType(limit, typeID, money); err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+
 	message := jsonutil.JsonMessage{
 		Code: http.StatusOK,
-		// Лень придумывать
-		Message: "gots",
-		Node: map[string]any{
-			"wallet_id": wallet.ID,
-			"disholded": wallet.Balance,
-			"hold":      wallet.Hold,
+		Data: map[string]any{
+			"balance": wallet.Balance,
+			"hold":    wallet.Hold,
 		},
 	}
-	jsonutil.MarshalResponse(w, http.StatusOK, "success", &message)
+	jsonutil.MarshalResponse(w, http.StatusOK, &message)
+}
 
+func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
+	walletID, err := requtil.GetParamsByName(r, "wallet_id")
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+
+	wallet, err := h.service.GetWalletByID(walletID)
+	if err != nil {
+		message := jsonutil.JsonMessage{
+			Code:    http.StatusBadRequest,
+			Message: err.Error(),
+		}
+		jsonutil.MarshalResponse(w, http.StatusBadRequest, &message)
+		return
+	}
+
+	createdAt, updatedAt := wallet.GetDates()
+
+	message := jsonutil.JsonMessage{
+		Code: http.StatusOK,
+		Data: map[string]any{
+			"wallet_id": wallet.ID,
+			"wallet_data": map[string]any{
+				"banalce": wallet.Balance,
+				"hold":    wallet.Hold,
+				"date": map[string]any{
+					"created": createdAt,
+					"updated": updatedAt,
+				},
+			},
+		},
+	}
+	jsonutil.MarshalResponse(w, http.StatusOK, &message)
 }

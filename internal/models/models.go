@@ -6,6 +6,11 @@ import (
 )
 
 const (
+	TYPE_ID_DEBIT   = 1
+	TYPE_ID_DEPOSIT = 2
+)
+
+const (
 	INDENTIFICATION_LEVEL_ANONYMOUS  = 1
 	INDENTIFICATION_LEVEL_SIMPLIFIED = 2
 	INDENTIFICATION_LEVEL_FULL       = 3
@@ -27,11 +32,65 @@ type LimitLaw struct {
 	BalanceMax          int    `db:"balance_max"`
 }
 
-func (w *Wallet) Debit(money int) error {
-	if w.Hold < money {
-		return errors.New("нечего снимать")
+func (w *Wallet) LimitLawCheck(l *LimitLaw) error {
+	if w.Balance >= l.BalanceMax {
+		return errors.New("превышение допустимого лимита")
+	}
+	if w.Balance <= l.BalanceMin {
+		return errors.New("ниже допустимого лимита")
+	}
+	return nil
+}
+
+func (w *Wallet) HoldBalance(money int) error {
+	if money <= 0 {
+		return errors.New("отрицательное значение")
+	}
+	if w.Balance < (w.Hold + money) {
+		return errors.New("недостаточно денег")
 	}
 
+	w.Hold += money
+	return nil
+}
+
+func (w *Wallet) DisholdBalance(money int) error {
+	if money <= 0 {
+		return errors.New("отрицательное значение")
+	}
+	if w.Hold < money {
+		return errors.New("недостаточно денег")
+	}
+
+	w.Hold -= money
+	return nil
+}
+
+func (w *Wallet) EditWithType(l *LimitLaw, typeID int, money int) error {
+	if money <= 0 {
+		return errors.New("отрицательное значение")
+	}
+
+	switch typeID {
+	case TYPE_ID_DEBIT:
+		{
+			if err := w.DebitBalance(money); err != nil {
+				return err
+			}
+			return nil
+		}
+	case TYPE_ID_DEPOSIT:
+		{
+			if err := w.DepositBalance(l, money); err != nil {
+				return err
+			}
+			return nil
+		}
+	}
+	return errors.New("неизвестный тип")
+}
+
+func (w *Wallet) DebitBalance(money int) error {
 	if err := w.DisholdBalance(money); err != nil {
 		return err
 	}
@@ -40,66 +99,16 @@ func (w *Wallet) Debit(money int) error {
 	return nil
 }
 
-func (w *Wallet) Deposit(money int, l *LimitLaw) error {
-	if w.Balance+money >= l.BalanceMax {
-		return errors.New("будет превышен лимит по денежным средствам")
-	}
-	if !w.LimitLawCheck(l) {
-		return errors.New("превышен лимит по денежным средствам")
-	}
+func (w *Wallet) DepositBalance(l *LimitLaw, money int) error {
 	w.Balance += money
+	if err := w.LimitLawCheck(l); err != nil {
+		return err
+	}
 	return nil
 }
 
-func (w *Wallet) HoldBalance(hold int) error {
-	if hold > w.Balance {
-		return errors.New("вы не можете захолдировать больше, чем у вас есть")
-	}
-
-	if w.Hold > w.Balance {
-		return errors.New("денег нет уже аааа")
-	}
-
-	if hold <= 0 {
-		return errors.New("вы не можете захолдировать ноль или меньше")
-	}
-
-	w.Hold += hold
-	return nil
-}
-
-func (w *Wallet) DisholdBalance(hold int) error {
-	if w.Hold < hold {
-		return errors.New("денег нет уже аааа")
-	}
-
-	if hold <= 0 {
-		return errors.New("вы не можете расхолдировать ноль или меньше")
-	}
-
-	w.Hold -= hold
-	return nil
-}
-
-func (w *Wallet) LimitLawCheck(l *LimitLaw) bool {
-	if w.IdentificationLevel == l.ID && w.Balance >= l.BalanceMax {
-		return false
-	}
-
-	if w.IdentificationLevel == l.ID && w.Balance <= l.BalanceMin {
-		return false
-	}
-	return true
-}
-
-func (l *LimitLaw) LimitLevelCheck(value int) bool {
-	switch l.ID {
-	case INDENTIFICATION_LEVEL_FULL:
-		return true
-	case INDENTIFICATION_LEVEL_SIMPLIFIED:
-		return true
-	case INDENTIFICATION_LEVEL_ANONYMOUS:
-		return true
-	}
-	return false
+func (w *Wallet) GetDates() (string, string) {
+	createAt := w.CreatedAt.Format(time.DateOnly)
+	updatedAt := w.UpdatedAt.Format(time.DateOnly)
+	return createAt, updatedAt
 }

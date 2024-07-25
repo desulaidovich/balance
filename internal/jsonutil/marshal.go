@@ -23,16 +23,17 @@ import (
 
 type JsonMessage struct {
 	Code    uint   `json:"code"`
-	Message string `json:"message"`
-	Node    any    `json:"response"`
+	Message string `json:"message,omitempty"`
+	Data    any    `json:"data,omitempty"`
 }
 
-func MarshalResponse(w http.ResponseWriter, status int, name string, response any) {
+func MarshalResponse(w http.ResponseWriter, status int, response any) {
 	w.Header().Set("Content-Type", "application/json")
 
 	data, err := json.Marshal(response)
 
 	if err != nil {
+		// TODO: заменить на логгер
 		panic(err)
 	}
 

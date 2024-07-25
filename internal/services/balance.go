@@ -19,7 +19,7 @@ func New(db *sqlx.DB) *Service {
 	}
 }
 
-func (s *Service) GetLimitByID(id string) (*models.LimitLaw, error) {
+func (s *Service) GetLimitByID(id int) (*models.LimitLaw, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
