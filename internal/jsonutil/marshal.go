@@ -5,22 +5,6 @@ import (
 	"net/http"
 )
 
-// if err != nil {
-// 	w.WriteHeader(http.StatusBadRequest)
-
-// 	jsonError = &JsonMessage{
-// 		Code:    http.StatusBadRequest,
-// 		Message: `Параметр "money" должен быть числом`,
-// 	}
-
-// 	request, _ = json.Marshal(map[string]JsonMessage{
-// 		"error": *jsonError,
-// 	})
-
-// 	w.Write(request)
-// 	return
-// }
-
 type JsonMessage struct {
 	Code    uint   `json:"code"`
 	Message string `json:"message,omitempty"`
