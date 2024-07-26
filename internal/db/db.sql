@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS limit_law;
+DROP TABLE IF EXISTS limit_law CASCADE;
 CREATE TYPE balance_identifiaction_level AS ENUM ('anonymous', 'simplified', 'full');
 CREATE TABLE limit_law (
     id SERIAL PRIMARY KEY,
@@ -7,7 +7,7 @@ CREATE TABLE limit_law (
     balance_max INT NOT NULL
 );
 
-DROP TABLE IF EXISTS balance;
+DROP TABLE IF EXISTS balance CASCADE;
 CREATE TABLE balance (
     id SERIAL PRIMARY KEY,
     balance INT NOT NULL,

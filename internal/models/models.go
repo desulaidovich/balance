@@ -10,12 +10,6 @@ const (
 	TYPE_ID_DEPOSIT = 2
 )
 
-const (
-	INDENTIFICATION_LEVEL_ANONYMOUS  = 1
-	INDENTIFICATION_LEVEL_SIMPLIFIED = 2
-	INDENTIFICATION_LEVEL_FULL       = 3
-)
-
 type Wallet struct {
 	ID                  int       `db:"id"`
 	Balance             int       `db:"balance"`

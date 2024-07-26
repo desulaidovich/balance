@@ -17,8 +17,13 @@ func MarshalResponse(w http.ResponseWriter, status int, response any) {
 	data, err := json.Marshal(response)
 
 	if err != nil {
-		// TODO: заменить на логгер
-		panic(err)
+		w.WriteHeader(http.StatusAlreadyReported)
+		message, _ := json.Marshal(&JsonMessage{
+			Code:    http.StatusAlreadyReported,
+			Message: err.Error(),
+		})
+		w.Write(message)
+		return
 	}
 
 	w.WriteHeader(status)
