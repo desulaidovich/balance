@@ -11,7 +11,7 @@ const (
 )
 
 type JSONMessage struct {
-	Code    int    `json:"code,omitempty"`
+	Code    int    `json:"code"`
 	Message string `json:"message,omitempty"`
 	Data    *Data  `json:"data,omitempty"`
 }
@@ -37,7 +37,7 @@ type Identification struct {
 func MarshalResponse(w http.ResponseWriter, status int, response *JSONMessage) {
 	w.Header().Set("Content-Type", "application/json")
 
-	data, err := json.Marshal(response)
+	data, err := json.Marshal(&response)
 
 	if err != nil {
 		w.WriteHeader(http.StatusAlreadyReported)
