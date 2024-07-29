@@ -1,12 +1,16 @@
 version: "3.9"
 services:
+  nats:
+    container_name: NATS
+    image: nats:latest
+    ports:
+      - "4222:4222"
   postgres:
+    container_name: Postgres
     image: postgres:latest
     environment:
       POSTGRES_DB: "balance"
       POSTGRES_USER: "tony"
       POSTGRES_PASSWORD: "ynot"
-    volumes:
-      - .:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"

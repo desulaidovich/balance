@@ -1,4 +1,4 @@
-package requtil
+package utils
 
 import (
 	"errors"

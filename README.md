@@ -14,7 +14,134 @@
 |----|------------|
 | 1  | Списание   |
 | 2  | Пополнение |
-|    |            |
+
+
+### NATS example
+```go
+package main
+
+import (
+	"log"
+	"sync"
+	"time"
+
+	"github.com/nats-io/nats.go"
+)
+
+const (
+	REQUEST_ERROR_CODE    = 500
+	REQUEST_NO_ERROR_CODE = 0
+)
+
+type JSONMessage struct {
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+	Data    *Data  `json:"data,omitempty"`
+}
+
+type Data struct {
+	WalletData *WalletData `json:"wallet_data,omitempty"`
+	WalletID   int         `json:"wallet_id,omitempty"`
+}
+
+type WalletData struct {
+	CreateAt       string          `json:"created_at,omitempty"`
+	UpdatedAt      string          `json:"updated_at,omitempty"`
+	Hold           int             `json:"hold,omitempty"`
+	Balance        int             `json:"balance,omitempty"`
+	Identification *Identification `json:"identification,omitempty"`
+}
+
+type Identification struct {
+	ID   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
+func main() {
+	nc, err := nats.Connect(nats.DefaultURL, nats.Name("Balance"), nats.ReconnectWait(40*time.Second),
+		nats.ErrorHandler(func(_ *nats.Conn, _ *nats.Subscription, err error) {
+			log.Printf("Error: %v", err)
+		}))
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer nc.Close()
+
+	getStatusTxt := func(nc *nats.Conn) string {
+		switch nc.Status() {
+		case nats.CONNECTED:
+			return "Connected"
+		case nats.CLOSED:
+			return "Closed"
+		default:
+			return "Other"
+		}
+	}
+	log.Printf("The connection is %v\n", getStatusTxt(nc))
+
+	ec, err := nats.NewEncodedConn(nc, nats.JSON_ENCODER)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer ec.Close()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	if _, err := ec.Subscribe("created", func(data *JSONMessage) {
+		log.Printf("[created]\tcode:%d, message:%s ", data.Code, data.Message)
+		log.Printf("\t\twallet id:%d, balance:%d hold:%d",
+			data.Data.WalletID, data.Data.WalletData.Balance, data.Data.WalletData.Hold)
+		log.Printf("\t\tidentification %d (%s)",
+			data.Data.WalletData.Identification.ID, data.Data.WalletData.Identification.Name)
+		wg.Done()
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := ec.Subscribe("holded", func(data *JSONMessage) {
+		log.Printf("[holded]\tcode:%d, message:%s ", data.Code, data.Message)
+		log.Printf("\t\twallet id:%d, balance:%d hold:%d",
+			data.Data.WalletID, data.Data.WalletData.Balance, data.Data.WalletData.Hold)
+		wg.Done()
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := ec.Subscribe("disholded", func(data *JSONMessage) {
+		log.Printf("[disholded]\tcode:%d, message:%s ", data.Code, data.Message)
+		log.Printf("\t\twallet id:%d, balance:%d hold:%d",
+			data.Data.WalletID, data.Data.WalletData.Balance, data.Data.WalletData.Hold)
+		wg.Done()
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := ec.Subscribe("edited", func(data *JSONMessage) {
+		log.Printf("[edited]\tcode:%d, message:%s ", data.Code, data.Message)
+		log.Printf("\t\twallet id:%d, balance:%d hold:%d",
+			data.Data.WalletID, data.Data.WalletData.Balance, data.Data.WalletData.Hold)
+		log.Printf("\t\tidentification %d (%s)",
+			data.Data.WalletData.Identification.ID, data.Data.WalletData.Identification.Name)
+		wg.Done()
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := ec.Subscribe("got", func(data *JSONMessage) {
+		log.Printf("[edited]\tcode:%d, message:%s ", data.Code, data.Message)
+		log.Printf("\t\twallet id:%d, balance:%d hold:%d",
+			data.Data.WalletID, data.Data.WalletData.Balance, data.Data.WalletData.Hold)
+		log.Printf("\t\tidentification %d (%s)",
+			data.Data.WalletData.Identification.ID, data.Data.WalletData.Identification.Name)
+		wg.Done()
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	wg.Wait()
+}
+```
 
 
 ###  [Thunder Client](https://www.thunderclient.com/)

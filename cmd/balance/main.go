@@ -3,5 +3,7 @@ package main
 import "github.com/desulaidovich/balance/internal/balance"
 
 func main() {
-	balance.Run()
+	if err := balance.Run(); err != nil {
+		panic(err)
+	}
 }

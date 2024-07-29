@@ -7,19 +7,27 @@ import (
 	"github.com/desulaidovich/balance/config"
 	"github.com/desulaidovich/balance/internal/api"
 	"github.com/desulaidovich/balance/pkg/db"
+	"github.com/desulaidovich/balance/pkg/messaging"
 )
 
-func Run() {
+func Run() error {
 	cfg := config.Load()
+
+	natsConn, err := messaging.Connect()
+
+	if err != nil {
+		return err
+	}
+	defer natsConn.Close()
 
 	postgres, err := db.NewPostgres(cfg)
 
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	mux := http.NewServeMux()
-	httpApi := api.New(mux, postgres)
+	httpApi := api.New(mux, postgres, natsConn)
 
 	mux.HandleFunc("POST /wallet/create", httpApi.Create)
 	mux.HandleFunc("POST /wallet/hold", httpApi.Hold)
@@ -33,4 +41,5 @@ func Run() {
 	}
 
 	log.Fatal(server.ListenAndServe())
+	return nil
 }
