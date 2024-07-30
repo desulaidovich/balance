@@ -1,13 +1,13 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/desulaidovich/balance/internal/models"
 	"github.com/desulaidovich/balance/internal/services"
 	"github.com/desulaidovich/balance/internal/utils"
 	"github.com/desulaidovich/balance/pkg/messaging"
+	"github.com/desulaidovich/balance/pkg/slogger"
 	"github.com/jmoiron/sqlx"
 	"github.com/nats-io/nats.go"
 )
@@ -17,9 +17,10 @@ type HttpApi struct {
 	db      *sqlx.DB
 	service *services.Service
 	nc      *messaging.NatsConnection
+	slogger *slogger.Logger
 }
 
-func New(mux *http.ServeMux, db *sqlx.DB, nc *nats.Conn) *HttpApi {
+func New(mux *http.ServeMux, db *sqlx.DB, nc *nats.Conn, slogger *slogger.Logger) *HttpApi {
 	s := services.New(db)
 	n := messaging.NewNatsConnection(nc)
 
@@ -28,6 +29,7 @@ func New(mux *http.ServeMux, db *sqlx.DB, nc *nats.Conn) *HttpApi {
 		db:      db,
 		service: s,
 		nc:      n,
+		slogger: slogger,
 	}
 }
 
@@ -100,8 +102,7 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("created", message); err != nil {
-		// Мне лень подключать логгер
-		fmt.Printf("ERROR, %s", err.Error())
+		h.slogger.Error(err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -169,8 +170,7 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("holded", message); err != nil {
-		// Мне лень подключать логгер
-		fmt.Printf("ERROR, %s", err.Error())
+		h.slogger.Error(err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -237,8 +237,7 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("disholded", message); err != nil {
-		// Мне лень подключать логгер
-		fmt.Printf("ERROR, %s", err.Error())
+		h.slogger.Error(err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -318,8 +317,7 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("edited", message); err != nil {
-		// Мне лень подключать логгер
-		fmt.Printf("ERROR, %s", err.Error())
+		h.slogger.Error(err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -366,8 +364,7 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	if err = h.nc.SendJSON("got", message); err != nil {
-		// Мне лень подключать логгер
-		fmt.Printf("ERROR, %s", err.Error())
+		h.slogger.Error(err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{

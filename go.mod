@@ -6,6 +6,7 @@ require (
 	github.com/gookit/ini/v2 v2.2.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/lmittmann/tint v1.0.5
 )
 
 require (
