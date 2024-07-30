@@ -10,14 +10,14 @@ type ConfigData struct {
 	ConnectionString string
 }
 
-func Load() *ConfigData {
+func Load() (*ConfigData, error) {
 	if err := dotenv.Load("./config", ".env"); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &ConfigData{
 		Name:             dotenv.Get("APP_NAME"),
 		Port:             dotenv.Get("HTTP_PORT"),
 		ConnectionString: dotenv.Get("DATABASE_CONNECTION_STRING"),
-	}
+	}, nil
 }

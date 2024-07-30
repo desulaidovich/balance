@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 )
 
@@ -41,11 +42,8 @@ func MarshalResponse(w http.ResponseWriter, status int, response *JSONMessage) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusAlreadyReported)
-		message, _ := json.Marshal(&JSONMessage{
-			Code:    REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		})
-		w.Write(message)
+		message := fmt.Sprintf(`{"code":%d, "message":"%s"}`, REQUEST_ERROR_CODE, err.Error())
+		w.Write([]byte(message))
 		return
 	}
 

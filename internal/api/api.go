@@ -100,7 +100,8 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("created", message); err != nil {
-		fmt.Println(err.Error())
+		// Мне лень подключать логгер
+		fmt.Printf("ERROR, %s", err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -168,7 +169,8 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("holded", message); err != nil {
-		fmt.Println(err.Error())
+		// Мне лень подключать логгер
+		fmt.Printf("ERROR, %s", err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -235,7 +237,8 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("disholded", message); err != nil {
-		fmt.Println(err.Error())
+		// Мне лень подключать логгер
+		fmt.Printf("ERROR, %s", err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -315,7 +318,8 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = h.nc.SendJSON("edited", message); err != nil {
-		fmt.Println(err.Error())
+		// Мне лень подключать логгер
+		fmt.Printf("ERROR, %s", err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
@@ -362,7 +366,8 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	if err = h.nc.SendJSON("got", message); err != nil {
-		fmt.Println(err.Error())
+		// Мне лень подключать логгер
+		fmt.Printf("ERROR, %s", err.Error())
 	}
 
 	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{

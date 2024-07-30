@@ -1,7 +1,6 @@
 package balance
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/desulaidovich/balance/config"
@@ -11,7 +10,11 @@ import (
 )
 
 func Run() error {
-	cfg := config.Load()
+	cfg, err := config.Load()
+
+	if err != nil {
+		return err
+	}
 
 	natsConn, err := messaging.Connect()
 
@@ -40,6 +43,8 @@ func Run() error {
 		Handler: mux,
 	}
 
-	log.Fatal(server.ListenAndServe())
+	if err = server.ListenAndServe(); err != nil {
+		return err
+	}
 	return nil
 }
