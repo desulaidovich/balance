@@ -57,9 +57,11 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -67,9 +69,11 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -77,13 +81,16 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
-	message := utils.JSONMessage{
+	// Выглядит страшно
+	msgNats := utils.JSONMessage{
 		Code: http.StatusOK,
 		Data: &utils.Data{
 			WalletID: wallet.ID,
@@ -97,13 +104,14 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nats.SendJSON("created", message); err != nil {
+	if err = h.nats.SendJSON("created", msgNats); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
+
 	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
 		h.slogger.Logger.Error(err.Error())
 	}
@@ -129,9 +137,11 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -139,9 +149,11 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -149,9 +161,11 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -173,6 +187,7 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
+
 	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
 		h.slogger.Logger.Error(err.Error())
 	}
@@ -198,9 +213,11 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -208,9 +225,11 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -218,9 +237,11 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -241,6 +262,7 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
+
 	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
 		h.slogger.Logger.Error(err.Error())
 	}
@@ -273,9 +295,11 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -284,9 +308,11 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -294,9 +320,11 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
@@ -318,6 +346,7 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
+
 	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
 		h.slogger.Logger.Error(err.Error())
 	}
@@ -336,21 +365,23 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
+
 		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
 			h.slogger.Logger.Error(err.Error())
 		}
+
 		return
 	}
 
-	createdAt, updatedAt := wallet.GetDates()
+	walletCreatedAt, wallerUpdatedAt := wallet.GetDates()
 
-	message := utils.JSONMessage{
+	msgNats := utils.JSONMessage{
 		Code: utils.REQUEST_NO_ERROR_CODE,
 		Data: &utils.Data{
 			WalletID: wallet.ID,
 			WalletData: &utils.WalletData{
-				CreateAt:  createdAt,
-				UpdatedAt: updatedAt,
+				CreateAt:  walletCreatedAt,
+				UpdatedAt: wallerUpdatedAt,
 				Balance:   wallet.Balance,
 				Identification: &utils.Identification{
 					ID: wallet.IdentificationLevel,
@@ -359,7 +390,7 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nats.SendJSON("got", message); err != nil {
+	if err = h.nats.SendJSON("got", msgNats); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
