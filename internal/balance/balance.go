@@ -2,6 +2,7 @@ package balance
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/desulaidovich/balance/config"
 	"github.com/desulaidovich/balance/internal/api"
@@ -41,6 +42,9 @@ func Run() error {
 	server := new(http.Server)
 	server.Addr = ":" + cfg.Port
 	server.Handler = logger.Init(mux)
+
+	// Хз)
+	logger.Info(strings.ToUpper(cfg.Name) + " started on http://localhost:" + cfg.Port)
 
 	if err = server.ListenAndServe(); err != nil {
 		return err
