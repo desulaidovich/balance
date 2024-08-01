@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 )
 
@@ -35,18 +34,32 @@ type Identification struct {
 	Name string `json:"name,omitempty"`
 }
 
-func MarshalResponse(w http.ResponseWriter, status int, response *JSONMessage) {
-	w.Header().Set("Content-Type", "application/json")
+// func MarshalResponse(w http.ResponseWriter, status int, response *JSONMessage) {
+// 	w.Header().Set("Content-Type", "application/json")
 
-	data, err := json.Marshal(&response)
+// 	data, err := json.Marshal(&response)
+
+// 	if err != nil {
+// 		w.WriteHeader(http.StatusAlreadyReported)
+// 		message := fmt.Sprintf(`{"code":%d, "message":"%s"}`, REQUEST_ERROR_CODE, err.Error())
+// 		w.Write([]byte(message))
+// 		return
+// 	}
+
+// 	w.WriteHeader(status)
+// 	w.Write(data)
+// }
+
+func (msg *JSONMessage) RequestByHTTP(w http.ResponseWriter, status int) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	data, err := json.Marshal(&msg)
 
 	if err != nil {
-		w.WriteHeader(http.StatusAlreadyReported)
-		message := fmt.Sprintf(`{"code":%d, "message":"%s"}`, REQUEST_ERROR_CODE, err.Error())
-		w.Write([]byte(message))
-		return
+		return err
 	}
 
-	w.WriteHeader(status)
 	w.Write(data)
+	return nil
 }

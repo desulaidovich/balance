@@ -33,14 +33,16 @@ func New(mux *http.ServeMux, db *sqlx.DB, natsConn *nats.Conn, slogger *slogger.
 
 func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	getMoneyParam := utils.GetIntParam(r, "money")
-	money, ok := getMoneyParam(w)
-	if !ok {
+	money, err := getMoneyParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
 	getLevelParam := utils.GetIntParam(r, "level")
-	level, ok := getLevelParam(w)
-	if !ok {
+	level, err := getLevelParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
@@ -55,7 +57,9 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -63,7 +67,9 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -71,7 +77,9 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -96,19 +104,23 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
-	utils.MarshalResponse(w, http.StatusOK, msg)
+	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
+		h.slogger.Logger.Error(err.Error())
+	}
 }
 
 func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
-	walletID, ok := getWalletIDParam(w)
-	if !ok {
+	walletID, err := getWalletIDParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
 	getMoneyParam := utils.GetIntParam(r, "money")
-	money, ok := getMoneyParam(w)
-	if !ok {
+	money, err := getMoneyParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
@@ -117,7 +129,9 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -125,7 +139,9 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -133,7 +149,9 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -155,19 +173,23 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
-	utils.MarshalResponse(w, http.StatusOK, msg)
+	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
+		h.slogger.Logger.Error(err.Error())
+	}
 }
 
 func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
-	walletID, ok := getWalletIDParam(w)
-	if !ok {
+	walletID, err := getWalletIDParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
 	getMoneyParam := utils.GetIntParam(r, "money")
-	money, ok := getMoneyParam(w)
-	if !ok {
+	money, err := getMoneyParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
@@ -176,7 +198,9 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -184,7 +208,9 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -192,7 +218,9 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -213,25 +241,30 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
-	utils.MarshalResponse(w, http.StatusOK, msg)
+	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
+		h.slogger.Logger.Error(err.Error())
+	}
 }
 
 func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
-	walletID, ok := getWalletIDParam(w)
-	if !ok {
+	walletID, err := getWalletIDParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
 	getMoneyParam := utils.GetIntParam(r, "money")
-	money, ok := getMoneyParam(w)
-	if !ok {
+	money, err := getMoneyParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
 	getTypeIDParam := utils.GetIntParam(r, "type_id")
-	typeID, ok := getTypeIDParam(w)
-	if !ok {
+	typeID, err := getTypeIDParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
@@ -240,7 +273,9 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -249,7 +284,9 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -257,7 +294,9 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -279,13 +318,16 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
-	utils.MarshalResponse(w, http.StatusOK, msg)
+	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
+		h.slogger.Logger.Error(err.Error())
+	}
 }
 
 func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 	getTypeIDParam := utils.GetIntParam(r, "wallet_id")
-	walletID, ok := getTypeIDParam(w)
-	if !ok {
+	walletID, err := getTypeIDParam(w)
+	if err != nil {
+		h.slogger.Logger.Error(err.Error())
 		return
 	}
 
@@ -294,7 +336,9 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 		msg := new(utils.JSONMessage)
 		msg.Code = utils.REQUEST_ERROR_CODE
 		msg.Message = err.Error()
-		utils.MarshalResponse(w, http.StatusBadRequest, msg)
+		if err = msg.RequestByHTTP(w, http.StatusBadRequest); err != nil {
+			h.slogger.Logger.Error(err.Error())
+		}
 		return
 	}
 
@@ -322,5 +366,8 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 	msg := new(utils.JSONMessage)
 	msg.Code = utils.REQUEST_NO_ERROR_CODE
 	msg.Message = "ok"
-	utils.MarshalResponse(w, http.StatusOK, msg)
+
+	if err = msg.RequestByHTTP(w, http.StatusOK); err != nil {
+		h.slogger.Logger.Error(err.Error())
+	}
 }
