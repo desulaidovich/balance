@@ -12,41 +12,39 @@ import (
 
 func Run() error {
 	logger := slogger.New()
-	cfg, err := config.Load()
 
+	cfg, err := config.LoadEnvFromFile()
 	if err != nil {
 		return err
 	}
 
-	natsConn, err := messaging.Connect()
-
+	nats, err := messaging.Connect()
 	if err != nil {
 		return err
 	}
-	defer natsConn.Close()
+	defer nats.Close()
 
-	postgres, err := db.NewPostgres(cfg)
-
+	postgres, err := db.New(cfg)
 	if err != nil {
 		return err
 	}
+	defer postgres.Close()
 
 	mux := http.NewServeMux()
-	httpApi := api.New(mux, postgres, natsConn, logger)
-
+	httpApi := api.New(mux, postgres, nats, logger)
 	mux.HandleFunc("POST /wallet/create", httpApi.Create)
 	mux.HandleFunc("POST /wallet/hold", httpApi.Hold)
 	mux.HandleFunc("POST /wallet/dishold", httpApi.Dishold)
 	mux.HandleFunc("POST /wallet/edit", httpApi.Edit)
 	mux.HandleFunc("GET /wallet/get", httpApi.Get)
 
-	server := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: logger.Init(mux),
-	}
+	server := new(http.Server)
+	server.Addr = ":" + cfg.Port
+	server.Handler = logger.Init(mux)
 
 	if err = server.ListenAndServe(); err != nil {
 		return err
 	}
+
 	return nil
 }

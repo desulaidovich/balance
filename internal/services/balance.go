@@ -13,17 +13,18 @@ type Service struct {
 }
 
 func New(db *sqlx.DB) *Service {
-	return &Service{
-		db: db,
-		mu: sync.Mutex{},
-	}
+	service := new(Service)
+	service.db = db
+	service.mu = sync.Mutex{}
+
+	return service
 }
 
 func (s *Service) GetLimitByID(id int) (*models.LimitLaw, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	limit := models.LimitLaw{}
+	var limit models.LimitLaw
 	err := s.db.Get(&limit, "SELECT * FROM limit_law WHERE id=$1;", id)
 
 	if err != nil {
@@ -37,7 +38,7 @@ func (s *Service) GetWalletByID(id int) (*models.Wallet, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	wallet := models.Wallet{}
+	var wallet models.Wallet
 	err := s.db.Get(&wallet, "SELECT * FROM balance WHERE id=$1;", id)
 
 	if err != nil {

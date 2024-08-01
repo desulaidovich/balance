@@ -4,20 +4,21 @@ import (
 	"github.com/gookit/ini/v2/dotenv"
 )
 
-type ConfigData struct {
+type Data struct {
 	Name             string
 	Port             string
 	ConnectionString string
 }
 
-func Load() (*ConfigData, error) {
+func LoadEnvFromFile() (*Data, error) {
 	if err := dotenv.Load("./config", ".env"); err != nil {
 		return nil, err
 	}
 
-	return &ConfigData{
-		Name:             dotenv.Get("APP_NAME"),
-		Port:             dotenv.Get("HTTP_PORT"),
-		ConnectionString: dotenv.Get("DATABASE_CONNECTION_STRING"),
-	}, nil
+	config := new(Data)
+	config.Name = dotenv.Get("APP_NAME")
+	config.Port = dotenv.Get("HTTP_PORT")
+	config.ConnectionString = dotenv.Get("DATABASE_CONNECTION_STRING")
+
+	return config, nil
 }

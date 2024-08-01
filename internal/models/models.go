@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	TYPE_ID_DEBIT   = 1
-	TYPE_ID_DEPOSIT = 2
+	_ = iota
+	TYPE_ID_DEBIT
+	TYPE_ID_DEPOSIT
 )
 
 type Wallet struct {
@@ -30,9 +31,11 @@ func (w *Wallet) LimitLawCheck(l *LimitLaw) error {
 	if w.Balance >= l.BalanceMax {
 		return errors.New("превышение допустимого лимита")
 	}
+
 	if w.Balance <= l.BalanceMin {
 		return errors.New("ниже допустимого лимита")
 	}
+
 	return nil
 }
 
@@ -40,11 +43,13 @@ func (w *Wallet) HoldBalance(money int) error {
 	if money <= 0 {
 		return errors.New("отрицательное значение")
 	}
+
 	if w.Balance < (w.Hold + money) {
 		return errors.New("недостаточно денег")
 	}
 
 	w.Hold += money
+
 	return nil
 }
 
@@ -52,11 +57,13 @@ func (w *Wallet) DisholdBalance(money int) error {
 	if money <= 0 {
 		return errors.New("отрицательное значение")
 	}
+
 	if w.Hold < money {
 		return errors.New("недостаточно денег")
 	}
 
 	w.Hold -= money
+
 	return nil
 }
 
@@ -81,6 +88,7 @@ func (w *Wallet) EditWithType(l *LimitLaw, typeID int, money int) error {
 			return nil
 		}
 	}
+
 	return errors.New("неизвестный тип")
 }
 
@@ -90,14 +98,17 @@ func (w *Wallet) DebitBalance(money int) error {
 	}
 
 	w.Balance -= money
+
 	return nil
 }
 
 func (w *Wallet) DepositBalance(l *LimitLaw, money int) error {
 	w.Balance += money
+
 	if err := w.LimitLawCheck(l); err != nil {
 		return err
 	}
+
 	return nil
 }
 

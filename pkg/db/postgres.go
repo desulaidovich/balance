@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewPostgres(c *config.ConfigData) (*sqlx.DB, error) {
+func New(c *config.Data) (*sqlx.DB, error) {
 	db, err := sqlx.Connect("pgx", c.ConnectionString)
 
 	if err != nil {

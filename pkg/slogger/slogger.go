@@ -13,14 +13,11 @@ type Logger struct {
 }
 
 func New() *Logger {
-	// default
-	// no colorize
-	// l := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	l := slog.New(tint.NewHandler(os.Stdout, nil))
+	logger := new(Logger)
 
-	return &Logger{
-		l,
-	}
+	logger.Logger = slog.New(tint.NewHandler(os.Stdout, nil))
+
+	return logger
 }
 
 func (l *Logger) Init(h http.Handler) http.Handler {

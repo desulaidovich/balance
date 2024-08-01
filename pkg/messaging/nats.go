@@ -11,6 +11,13 @@ type NatsConnection struct {
 	*nats.Conn
 }
 
+func New(conn *nats.Conn) *NatsConnection {
+	nats := new(NatsConnection)
+	nats.Conn = conn
+
+	return nats
+}
+
 func (n *NatsConnection) SendJSON(subject string, data utils.JSONMessage) error {
 	encodedCon, err := nats.NewEncodedConn(n.Conn, nats.JSON_ENCODER)
 
@@ -23,12 +30,6 @@ func (n *NatsConnection) SendJSON(subject string, data utils.JSONMessage) error 
 	}
 
 	return nil
-}
-
-func NewNatsConnection(conn *nats.Conn) *NatsConnection {
-	return &NatsConnection{
-		conn,
-	}
 }
 
 func Connect() (*nats.Conn, error) {

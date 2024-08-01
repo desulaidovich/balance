@@ -16,21 +16,19 @@ type HttpApi struct {
 	mux     *http.ServeMux
 	db      *sqlx.DB
 	service *services.Service
-	nc      *messaging.NatsConnection
+	nats    *messaging.NatsConnection
 	slogger *slogger.Logger
 }
 
-func New(mux *http.ServeMux, db *sqlx.DB, nc *nats.Conn, slogger *slogger.Logger) *HttpApi {
-	s := services.New(db)
-	n := messaging.NewNatsConnection(nc)
+func New(mux *http.ServeMux, db *sqlx.DB, natsConn *nats.Conn, slogger *slogger.Logger) *HttpApi {
+	httpApi := new(HttpApi)
+	httpApi.mux = mux
+	httpApi.db = db
+	httpApi.service = services.New(db)
+	httpApi.nats = messaging.New(natsConn)
+	httpApi.slogger = slogger
 
-	return &HttpApi{
-		mux:     mux,
-		db:      db,
-		service: s,
-		nc:      n,
-		slogger: slogger,
-	}
+	return httpApi
 }
 
 func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
@@ -55,27 +53,26 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 	limit, err := h.service.GetLimitByID(level)
 
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
-	if err := wallet.LimitLawCheck(limit); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+
+	if err = wallet.LimitLawCheck(limit); err != nil {
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
+
 	if err = h.service.CreateWallet(wallet); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -93,14 +90,14 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nc.SendJSON("created", message); err != nil {
+	if err = h.nats.SendJSON("created", message); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
-	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
-		Code:    utils.REQUEST_NO_ERROR_CODE,
-		Message: "ok",
-	})
+	msg := new(utils.JSONMessage)
+	msg.Code = utils.REQUEST_NO_ERROR_CODE
+	msg.Message = "ok"
+	utils.MarshalResponse(w, http.StatusOK, msg)
 }
 
 func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
@@ -118,27 +115,26 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 
 	wallet, err := h.service.GetWalletByID(walletID)
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
+
 	if err = wallet.HoldBalance(money); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
+
 	if err = h.service.UpdateWallet(wallet); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -153,14 +149,14 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nc.SendJSON("holded", message); err != nil {
+	if err = h.nats.SendJSON("holded", message); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
-	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
-		Code:    utils.REQUEST_NO_ERROR_CODE,
-		Message: "ok",
-	})
+	msg := new(utils.JSONMessage)
+	msg.Code = utils.REQUEST_NO_ERROR_CODE
+	msg.Message = "ok"
+	utils.MarshalResponse(w, http.StatusOK, msg)
 }
 
 func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
@@ -178,27 +174,26 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 
 	wallet, err := h.service.GetWalletByID(walletID)
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
+
 	if err = wallet.DisholdBalance(money); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
+
 	if err = h.service.UpdateWallet(wallet); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -212,14 +207,14 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nc.SendJSON("disholded", message); err != nil {
+	if err = h.nats.SendJSON("disholded", message); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
-	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
-		Code:    utils.REQUEST_NO_ERROR_CODE,
-		Message: "ok",
-	})
+	msg := new(utils.JSONMessage)
+	msg.Code = utils.REQUEST_NO_ERROR_CODE
+	msg.Message = "ok"
+	utils.MarshalResponse(w, http.StatusOK, msg)
 }
 
 func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
@@ -243,29 +238,27 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 
 	wallet, err := h.service.GetWalletByID(walletID)
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
 	limit, err := h.service.GetLimitByID(wallet.IdentificationLevel)
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
-	if err := wallet.EditWithType(limit, typeID, money); err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+
+	if err = wallet.EditWithType(limit, typeID, money); err != nil {
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -280,14 +273,14 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	if err = h.nc.SendJSON("edited", message); err != nil {
+	if err = h.nats.SendJSON("edited", message); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
-	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
-		Code:    utils.REQUEST_NO_ERROR_CODE,
-		Message: "ok",
-	})
+	msg := new(utils.JSONMessage)
+	msg.Code = utils.REQUEST_NO_ERROR_CODE
+	msg.Message = "ok"
+	utils.MarshalResponse(w, http.StatusOK, msg)
 }
 
 func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
@@ -299,11 +292,10 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 
 	wallet, err := h.service.GetWalletByID(walletID)
 	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+		msg := new(utils.JSONMessage)
+		msg.Code = utils.REQUEST_ERROR_CODE
+		msg.Message = err.Error()
+		utils.MarshalResponse(w, http.StatusBadRequest, msg)
 		return
 	}
 
@@ -323,12 +315,13 @@ func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
-	if err = h.nc.SendJSON("got", message); err != nil {
+
+	if err = h.nats.SendJSON("got", message); err != nil {
 		h.slogger.Error(err.Error())
 	}
 
-	utils.MarshalResponse(w, http.StatusOK, &utils.JSONMessage{
-		Code:    utils.REQUEST_NO_ERROR_CODE,
-		Message: "ok",
-	})
+	msg := new(utils.JSONMessage)
+	msg.Code = utils.REQUEST_NO_ERROR_CODE
+	msg.Message = "ok"
+	utils.MarshalResponse(w, http.StatusOK, msg)
 }
