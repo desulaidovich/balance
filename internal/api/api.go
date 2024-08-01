@@ -34,23 +34,15 @@ func New(mux *http.ServeMux, db *sqlx.DB, nc *nats.Conn, slogger *slogger.Logger
 }
 
 func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
-	money, err := utils.GetParamsByName(r, "money")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getMoneyParam := utils.GetIntParam(r, "money")
+	money, ok := getMoneyParam(w)
+	if !ok {
 		return
 	}
 
-	level, err := utils.GetParamsByName(r, "level")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getLevelParam := utils.GetIntParam(r, "level")
+	level, ok := getLevelParam(w)
+	if !ok {
 		return
 	}
 
@@ -112,23 +104,15 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
-	walletID, err := utils.GetParamsByName(r, "wallet_id")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
+	walletID, ok := getWalletIDParam(w)
+	if !ok {
 		return
 	}
 
-	money, err := utils.GetParamsByName(r, "money")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getMoneyParam := utils.GetIntParam(r, "money")
+	money, ok := getMoneyParam(w)
+	if !ok {
 		return
 	}
 
@@ -180,23 +164,15 @@ func (h *HttpApi) Hold(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
-	walletID, err := utils.GetParamsByName(r, "wallet_id")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
+	walletID, ok := getWalletIDParam(w)
+	if !ok {
 		return
 	}
 
-	money, err := utils.GetParamsByName(r, "money")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getMoneyParam := utils.GetIntParam(r, "money")
+	money, ok := getMoneyParam(w)
+	if !ok {
 		return
 	}
 
@@ -247,33 +223,21 @@ func (h *HttpApi) Dishold(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
-	walletID, err := utils.GetParamsByName(r, "wallet_id")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getWalletIDParam := utils.GetIntParam(r, "wallet_id")
+	walletID, ok := getWalletIDParam(w)
+	if !ok {
 		return
 	}
 
-	money, err := utils.GetParamsByName(r, "money")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getMoneyParam := utils.GetIntParam(r, "money")
+	money, ok := getMoneyParam(w)
+	if !ok {
 		return
 	}
 
-	typeID, err := utils.GetParamsByName(r, "type_id")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getTypeIDParam := utils.GetIntParam(r, "type_id")
+	typeID, ok := getTypeIDParam(w)
+	if !ok {
 		return
 	}
 
@@ -327,13 +291,9 @@ func (h *HttpApi) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HttpApi) Get(w http.ResponseWriter, r *http.Request) {
-	walletID, err := utils.GetParamsByName(r, "wallet_id")
-	if err != nil {
-		message := utils.JSONMessage{
-			Code:    utils.REQUEST_ERROR_CODE,
-			Message: err.Error(),
-		}
-		utils.MarshalResponse(w, http.StatusBadRequest, &message)
+	getTypeIDParam := utils.GetIntParam(r, "wallet_id")
+	walletID, ok := getTypeIDParam(w)
+	if !ok {
 		return
 	}
 
