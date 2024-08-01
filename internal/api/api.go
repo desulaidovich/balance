@@ -44,11 +44,10 @@ func (h *HttpApi) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	wallet := &models.Wallet{
-		Balance:             money,
-		Hold:                0,
-		IdentificationLevel: level,
-	}
+	wallet := new(models.Wallet)
+	wallet.Balance = money
+	wallet.Hold = 0
+	wallet.IdentificationLevel = level
 
 	limit, err := h.service.GetLimitByID(level)
 
